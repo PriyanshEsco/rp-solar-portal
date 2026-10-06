@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Drawer } from '@/components/ui/Drawer';
 import { Table, Column } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
+import { FilterBar } from '@/components/ui/FilterBar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { KpiCard } from '@/components/ui/KpiCard';
 import { useToast } from '@/components/ui/Toast';
@@ -122,22 +123,14 @@ export default function SubsidyManagementPage() {
           setAnalytics(data.analytics);
         }
       } else {
-        toast.showToast({
-          type: 'error',
-          title: 'Failed to load subsidies',
-          message: data.error?.message || 'Unauthorized or server error',
-        });
+        toast.error('Failed to load subsidies', data.error?.message || 'Server error');
       }
     } catch (err: any) {
-      toast.showToast({
-        type: 'error',
-        title: 'Error',
-        message: err.message || 'Failed to connect to subsidy endpoint',
-      });
+      toast.error('Error', err.message || 'Failed to connect to subsidy endpoint');
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchSubsidies();
@@ -433,14 +426,6 @@ export default function SubsidyManagementPage() {
       />
 
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
-        {/* Decoupled Subsidy Architecture Notice */}
-        <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-3.5 text-xs text-amber-900 flex items-center space-x-2">
-          <Info className="w-4 h-4 text-amber-700 flex-shrink-0" />
-          <div>
-            <strong>Decoupled Subsidy Governance:</strong> Subsidy records, inspection workflows, and DBT redemptions remain strictly decoupled from EPC stage progression and milestone payment collections.
-          </div>
-        </div>
-
         {/* KPI Dashboard Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
@@ -451,14 +436,14 @@ export default function SubsidyManagementPage() {
             icon={<IndianRupee className="w-6 h-6 text-solar-green" />}
           />
           <KpiCard
-            title="Under Process / In Queue"
+            title="Under Process"
             value={formatINR(analytics.totalUnderProcessAmount)}
             subtitle={`${analytics.underProcessCount} portal applications active`}
             accentColor="solar"
             icon={<Clock className="w-6 h-6 text-solar-amber" />}
           />
           <KpiCard
-            title="DBT Redeemed & Disbursed"
+            title="DBT Disbursed"
             value={formatINR(analytics.totalRedeemedAmount)}
             subtitle={`${analytics.redeemedCount} consumer accounts credited`}
             accentColor="green"
@@ -467,77 +452,54 @@ export default function SubsidyManagementPage() {
           <KpiCard
             title="Pending Inspections"
             value={analytics.pendingInspectionCount}
-            subtitle="DISCOM / CEIG field audit clearance"
+            subtitle="DISCOM field audit pending"
             accentColor="solar"
             icon={<AlertCircle className="w-6 h-6 text-rose-600" />}
           />
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg border border-charcoal-200 shadow-sm p-4 space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 md:pb-0">
-              {[
-                { key: 'all', label: 'All Accounts', count: subsidies.length },
-                {
-                  key: 'under_process',
-                  label: 'Under Process',
-                  count: subsidies.filter((s) => s.subsidyStatus === 'under_process').length,
-                },
-                {
-                  key: 'approved',
-                  label: 'Approved',
-                  count: subsidies.filter((s) => s.subsidyStatus === 'approved').length,
-                },
-                {
-                  key: 'redeemed',
-                  label: 'Redeemed (DBT Paid)',
-                  count: subsidies.filter((s) => s.subsidyStatus === 'redeemed').length,
-                },
-                {
-                  key: 'inspection_pending',
-                  label: 'Inspection Pending',
-                  count: subsidies.filter((s) => s.subsidyStatus === 'inspection_pending').length,
-                },
-                {
-                  key: 'not_applied',
-                  label: 'Not Applied',
-                  count: subsidies.filter((s) => s.subsidyStatus === 'not_applied').length,
-                },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setStatusFilter(tab.key)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
-                    statusFilter === tab.key
-                      ? 'bg-solar-green text-white shadow-sm'
-                      : 'bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                      statusFilter === tab.key ? 'bg-white/20 text-white' : 'bg-charcoal-200 text-charcoal-700'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="relative w-full md:w-80">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
-              <input
-                type="text"
-                placeholder="Search by customer, project ID, application #..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-charcoal-50 border border-charcoal-200 rounded-md focus:outline-none focus:ring-1 focus:ring-solar-green"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Clean FilterBar with Quick Status Tabs */}
+        <FilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search by customer, project ID, application #, CA..."
+          tabs={[
+            { value: 'all', label: 'All Accounts', count: subsidies.length },
+            {
+              value: 'under_process',
+              label: 'Under Process',
+              count: subsidies.filter((s) => s.subsidyStatus === 'under_process').length,
+            },
+            {
+              value: 'approved',
+              label: 'Approved',
+              count: subsidies.filter((s) => s.subsidyStatus === 'approved').length,
+            },
+            {
+              value: 'redeemed',
+              label: 'DBT Credited',
+              count: subsidies.filter((s) => s.subsidyStatus === 'redeemed').length,
+            },
+            {
+              value: 'inspection_pending',
+              label: 'Inspection Pending',
+              count: subsidies.filter((s) => s.subsidyStatus === 'inspection_pending').length,
+            },
+            {
+              value: 'not_applied',
+              label: 'Not Applied',
+              count: subsidies.filter((s) => s.subsidyStatus === 'not_applied').length,
+            },
+          ]}
+          activeTab={statusFilter}
+          onTabChange={setStatusFilter}
+          activeFilterCount={statusFilter !== 'all' || searchQuery ? 1 : 0}
+          onResetFilters={() => {
+            setStatusFilter('all');
+            setSearchQuery('');
+          }}
+          totalCount={filteredSubsidies.length}
+        />
 
         {/* Main Table */}
         <div className="bg-white rounded-lg border border-charcoal-200 shadow-sm overflow-hidden">

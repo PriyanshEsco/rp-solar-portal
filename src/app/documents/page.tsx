@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Drawer } from '@/components/ui/Drawer';
 import { Table, Column } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
+import { FilterBar } from '@/components/ui/FilterBar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { KpiCard } from '@/components/ui/KpiCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -143,22 +144,14 @@ export default function DocumentManagementPage() {
           setDocCatalog(data.catalog);
         }
       } else {
-        toast.showToast({
-          type: 'error',
-          title: 'Failed to load documents',
-          message: data.error?.message || 'Unauthorized or server error',
-        });
+        toast.error('Failed to load documents', data.error?.message || 'Server error');
       }
     } catch (err: any) {
-      toast.showToast({
-        type: 'error',
-        title: 'Network Error',
-        message: err.message || 'Could not connect to document API',
-      });
+      toast.error('Network Error', err.message || 'Could not connect to document API');
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   // Fetch Projects for dropdowns
   const fetchProjects = useCallback(async () => {
@@ -886,97 +879,59 @@ export default function DocumentManagementPage() {
         {/* VIEW 2: ALL DOCUMENTS TABLE VIEW */}
         {viewMode === 'all_docs' && (
           <>
-            {/* Filter Bar */}
-            <div className="bg-white rounded-lg border border-charcoal-200 shadow-sm p-4 space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                {/* Status Pills */}
-                <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 md:pb-0">
-                  {[
-                    { key: 'all', label: 'All Vault Files', count: documents.length },
-                    {
-                      key: 'verified',
-                      label: 'Verified',
-                      count: documents.filter((d) => d.verificationStatus === 'verified').length,
-                    },
-                    {
-                      key: 'under_review',
-                      label: 'Under Review',
-                      count: documents.filter((d) => d.verificationStatus === 'under_review').length,
-                    },
-                    {
-                      key: 'uploaded',
-                      label: 'Uploaded',
-                      count: documents.filter((d) => d.verificationStatus === 'uploaded').length,
-                    },
-                    {
-                      key: 'rejected',
-                      label: 'Rejected',
-                      count: documents.filter((d) => d.verificationStatus === 'rejected').length,
-                    },
-                  ].map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setStatusFilter(tab.key as any)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
-                        statusFilter === tab.key
-                          ? 'bg-solar-green text-white shadow-sm'
-                          : 'bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200'
-                      }`}
-                    >
-                      <span>{tab.label}</span>
-                      <span
-                        className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                          statusFilter === tab.key ? 'bg-white/20 text-white' : 'bg-charcoal-200 text-charcoal-700'
-                        }`}
-                      >
-                        {tab.count}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Category Dropdown Filter */}
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs font-medium text-charcoal-600">Category:</span>
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="text-xs px-2.5 py-1.5 bg-white border border-charcoal-200 rounded-md focus:outline-none focus:ring-1 focus:ring-solar-green"
-                  >
-                    <option value="all">All Categories</option>
-                    <option value="identity">Identity & KYC</option>
-                    <option value="utility_bill">Electricity & Utility Bills</option>
-                    <option value="technical_sld">Technical SLD & Layouts</option>
-                    <option value="site_docs">Site Surveys & DISCOM NOCs</option>
-                    <option value="agreement">EPC Agreements & Work Orders</option>
-                    <option value="commissioning">Plant Commissioning</option>
-                    <option value="warranty">Warranties & Guarantees</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-3 border-t border-charcoal-100">
-                <div className="relative w-full md:w-96">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by doc type, file name, customer, project code..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-charcoal-50 border border-charcoal-200 rounded-md focus:outline-none focus:ring-1 focus:ring-solar-green focus:border-solar-green"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-3 text-xs text-charcoal-500 w-full md:w-auto justify-between md:justify-end">
-                  <span>
-                    Showing <strong className="text-charcoal-800">{filteredDocuments.length}</strong> statutory documents
-                  </span>
-                  <Button size="sm" variant="ghost" onClick={() => { setSearchQuery(''); setStatusFilter('all'); setCategoryFilter('all'); }}>
-                    Clear Filters
-                  </Button>
-                </div>
-              </div>
-            </div>
+            {/* Clean FilterBar with Quick Status Tabs & Category Filter */}
+            <FilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search by doc type, file name, customer, project code..."
+              tabs={[
+                { value: 'all', label: 'All Vault Files', count: documents.length },
+                {
+                  value: 'verified',
+                  label: 'Verified',
+                  count: documents.filter((d) => d.verificationStatus === 'verified').length,
+                },
+                {
+                  value: 'under_review',
+                  label: 'Under Review',
+                  count: documents.filter((d) => d.verificationStatus === 'under_review').length,
+                },
+                {
+                  value: 'uploaded',
+                  label: 'Uploaded',
+                  count: documents.filter((d) => d.verificationStatus === 'uploaded').length,
+                },
+                {
+                  value: 'rejected',
+                  label: 'Rejected',
+                  count: documents.filter((d) => d.verificationStatus === 'rejected').length,
+                },
+              ]}
+              activeTab={statusFilter}
+              onTabChange={(tab) => setStatusFilter(tab as any)}
+              activeFilterCount={(statusFilter !== 'all' || categoryFilter !== 'all' || searchQuery) ? 1 : 0}
+              onResetFilters={() => {
+                setStatusFilter('all');
+                setCategoryFilter('all');
+                setSearchQuery('');
+              }}
+              totalCount={filteredDocuments.length}
+            >
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="rp-select-filter"
+              >
+                <option value="all">All Categories</option>
+                <option value="identity">Identity & KYC</option>
+                <option value="utility_bill">Electricity & Utility Bills</option>
+                <option value="technical_sld">Technical SLD & Layouts</option>
+                <option value="site_docs">Site Surveys & DISCOM NOCs</option>
+                <option value="agreement">EPC Agreements & Work Orders</option>
+                <option value="commissioning">Plant Commissioning</option>
+                <option value="warranty">Warranties & Guarantees</option>
+              </select>
+            </FilterBar>
 
             {/* Documents Table */}
             <div className="bg-white rounded-lg border border-charcoal-200 shadow-sm overflow-hidden">

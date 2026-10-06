@@ -45,10 +45,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [removeToast]
   );
 
-  const success = (title: string, message?: string) => showToast({ type: 'success', title, message });
-  const error = (title: string, message?: string) => showToast({ type: 'error', title, message });
-  const warning = (title: string, message?: string) => showToast({ type: 'warning', title, message });
-  const info = (title: string, message?: string) => showToast({ type: 'info', title, message });
+  const success = useCallback((title: string, message?: string) => showToast({ type: 'success', title, message }), [showToast]);
+  const error = useCallback((title: string, message?: string) => showToast({ type: 'error', title, message }), [showToast]);
+  const warning = useCallback((title: string, message?: string) => showToast({ type: 'warning', title, message }), [showToast]);
+  const info = useCallback((title: string, message?: string) => showToast({ type: 'info', title, message }), [showToast]);
+
+  const value = React.useMemo(() => ({ showToast, success, error, warning, info }), [showToast, success, error, warning, info]);
 
   const getToastIcon = (type: ToastType) => {
     switch (type) {
@@ -79,7 +81,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
+    <ToastContext.Provider value={value}>
       {children}
       {/* Toast Render Stack */}
       <div

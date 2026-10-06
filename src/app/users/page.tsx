@@ -122,7 +122,7 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers, currentUser]);
+  }, [fetchUsers, currentUser?.id]);
 
   // Handle Onboarding
   const handleOnboardSubmit = async (e: React.FormEvent) => {

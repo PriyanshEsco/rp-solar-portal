@@ -99,7 +99,7 @@ export default function RoleBasedDashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedFY, selectedMonth, selectedAdmin, selectedEmployee, selectedType, selectedStatus, toast]);
+  }, [selectedFY, selectedMonth, selectedAdmin, selectedEmployee, selectedType, selectedStatus]);
 
   useEffect(() => {
     fetchDashboardData();

@@ -118,22 +118,14 @@ export default function PaymentManagementPage() {
           setAnalytics(data.analytics);
         }
       } else {
-        toast.showToast({
-          type: 'error',
-          title: 'Failed to load payments',
-          message: data.error?.message || 'Unauthorized or server error',
-        });
+        toast.error('Failed to load payments', data.error?.message || 'Server error');
       }
     } catch (err: any) {
-      toast.showToast({
-        type: 'error',
-        title: 'Error',
-        message: err.message || 'Failed to connect to payments endpoint',
-      });
+      toast.error('Error', err.message || 'Failed to connect to payments endpoint');
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   // Fetch Projects for payment dropdown
   const fetchProjects = useCallback(async () => {
@@ -578,109 +570,54 @@ export default function PaymentManagementPage() {
           </div>
         </div>
 
-        {/* Filters & Tab Bar */}
-        <div className="bg-white rounded-lg border border-charcoal-200 shadow-sm p-4 space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* Quick Status Pill Tabs */}
-            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 md:pb-0">
-              {[
-                { key: 'all', label: 'All Projects', count: payments.length },
-                {
-                  key: 'partially_paid',
-                  label: 'Partially Paid',
-                  count: payments.filter((p) => p.status === 'partially_paid').length,
-                },
-                {
-                  key: 'paid',
-                  label: 'Fully Paid',
-                  count: payments.filter((p) => p.status === 'paid' || p.paymentPercentage >= 100).length,
-                },
-                {
-                  key: 'pending',
-                  label: 'Pending',
-                  count: payments.filter((p) => p.status === 'pending').length,
-                },
-                {
-                  key: 'overdue',
-                  label: 'Overdue',
-                  count: payments.filter((p) => p.status === 'overdue').length,
-                },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setViewTab(tab.key as any)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
-                    viewTab === tab.key
-                      ? 'bg-solar-green text-white shadow-sm'
-                      : 'bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                      viewTab === tab.key ? 'bg-white/20 text-white' : 'bg-charcoal-200 text-charcoal-700'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Type selector (B2B vs B2C) */}
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-medium text-charcoal-600">Category:</span>
-              <div className="inline-flex rounded-md shadow-sm border border-charcoal-200 p-0.5 bg-charcoal-50">
-                <button
-                  onClick={() => setTypeFilter('all')}
-                  className={`px-2.5 py-1 text-xs font-medium rounded ${
-                    typeFilter === 'all' ? 'bg-white text-solar-green shadow-xs' : 'text-charcoal-600'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setTypeFilter('b2c')}
-                  className={`px-2.5 py-1 text-xs font-medium rounded ${
-                    typeFilter === 'b2c' ? 'bg-white text-solar-green shadow-xs' : 'text-charcoal-600'
-                  }`}
-                >
-                  B2C Retail
-                </button>
-                <button
-                  onClick={() => setTypeFilter('b2b')}
-                  className={`px-2.5 py-1 text-xs font-medium rounded ${
-                    typeFilter === 'b2b' ? 'bg-white text-solar-green shadow-xs' : 'text-charcoal-600'
-                  }`}
-                >
-                  B2B Commercial
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-3 border-t border-charcoal-100">
-            <div className="relative w-full md:w-96">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
-              <input
-                type="text"
-                placeholder="Search by customer, project ID, district, or officer..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-charcoal-50 border border-charcoal-200 rounded-md focus:outline-none focus:ring-1 focus:ring-solar-green focus:border-solar-green"
-              />
-            </div>
-
-            <div className="flex items-center space-x-3 text-xs text-charcoal-500 w-full md:w-auto justify-between md:justify-end">
-              <span>
-                Showing <strong className="text-charcoal-800">{filteredPayments.length}</strong> payment accounts
-              </span>
-              <Button size="sm" variant="ghost" onClick={() => { setSearchQuery(''); setViewTab('all'); setTypeFilter('all'); }}>
-                Clear Filters
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* Clean FilterBar with Quick Status Tabs & Category Selector */}
+        <FilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search by customer, project ID, district, or officer..."
+          tabs={[
+            { value: 'all', label: 'All Projects', count: payments.length },
+            {
+              value: 'partially_paid',
+              label: 'Partially Paid',
+              count: payments.filter((p) => p.status === 'partially_paid').length,
+            },
+            {
+              value: 'paid',
+              label: 'Fully Paid',
+              count: payments.filter((p) => p.status === 'paid' || p.paymentPercentage >= 100).length,
+            },
+            {
+              value: 'pending',
+              label: 'Pending',
+              count: payments.filter((p) => p.status === 'pending').length,
+            },
+            {
+              value: 'overdue',
+              label: 'Overdue',
+              count: payments.filter((p) => p.status === 'overdue').length,
+            },
+          ]}
+          activeTab={viewTab}
+          onTabChange={(tab) => setViewTab(tab as any)}
+          activeFilterCount={(viewTab !== 'all' || typeFilter !== 'all' || searchQuery) ? 1 : 0}
+          onResetFilters={() => {
+            setViewTab('all');
+            setTypeFilter('all');
+            setSearchQuery('');
+          }}
+          totalCount={filteredPayments.length}
+        >
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as any)}
+            className="rp-select-filter"
+          >
+            <option value="all">All Categories</option>
+            <option value="b2c">B2C Retail (Residential)</option>
+            <option value="b2b">B2B Commercial</option>
+          </select>
+        </FilterBar>
 
         {/* Payments Table */}
         <div className="bg-white rounded-lg border border-charcoal-200 shadow-sm overflow-hidden">

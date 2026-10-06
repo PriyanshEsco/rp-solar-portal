@@ -124,7 +124,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     fetchProject360();
-  }, [fetchProject360, currentUser]);
+  }, [fetchProject360, currentUser?.id]);
 
   // Open Stage editor
   const handleOpenStageEditor = (stage: any) => {

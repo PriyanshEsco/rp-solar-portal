@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Drawer } from '@/components/ui/Drawer';
 import { Table, Column } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
+import { FilterBar } from '@/components/ui/FilterBar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { KpiCard } from '@/components/ui/KpiCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -105,22 +106,14 @@ export default function InstallationManagementPage() {
           setAnalytics(data.analytics);
         }
       } else {
-        toast.showToast({
-          type: 'error',
-          title: 'Failed to load installations',
-          message: data.error?.message || 'Unauthorized or server error',
-        });
+        toast.error('Failed to load installations', data.error?.message || 'Server error');
       }
     } catch (err: any) {
-      toast.showToast({
-        type: 'error',
-        title: 'Error',
-        message: err.message || 'Failed to connect to installation endpoint',
-      });
+      toast.error('Error', err.message || 'Failed to connect to installation endpoint');
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchInstallations();
@@ -388,48 +381,33 @@ export default function InstallationManagementPage() {
           />
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg border border-charcoal-200 shadow-sm p-4 space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setStatusFilter('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  statusFilter === 'all' ? 'bg-solar-green text-white' : 'bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200'
-                }`}
-              >
-                All Installations ({installations.length})
-              </button>
-              <button
-                onClick={() => setStatusFilter('in_progress')}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  statusFilter === 'in_progress' ? 'bg-solar-green text-white' : 'bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200'
-                }`}
-              >
-                In Progress ({analytics.inProgressCount})
-              </button>
-              <button
-                onClick={() => setStatusFilter('completed')}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  statusFilter === 'completed' ? 'bg-solar-green text-white' : 'bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200'
-                }`}
-              >
-                Completed & Handed Over ({analytics.fullyCompleted})
-              </button>
-            </div>
-
-            <div className="relative w-full md:w-80">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
-              <input
-                type="text"
-                placeholder="Search by customer, project ID, district, or engineer..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-charcoal-50 border border-charcoal-200 rounded-md focus:outline-none focus:ring-1 focus:ring-solar-green"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Clean FilterBar with Quick Status Tabs */}
+        <FilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search by customer, project ID, district, or engineer..."
+          tabs={[
+            { value: 'all', label: 'All Installations', count: installations.length },
+            {
+              value: 'in_progress',
+              label: 'In Progress',
+              count: analytics.inProgressCount,
+            },
+            {
+              value: 'completed',
+              label: 'Completed & Handed Over',
+              count: analytics.fullyCompleted,
+            },
+          ]}
+          activeTab={statusFilter}
+          onTabChange={setStatusFilter}
+          activeFilterCount={statusFilter !== 'all' || searchQuery ? 1 : 0}
+          onResetFilters={() => {
+            setStatusFilter('all');
+            setSearchQuery('');
+          }}
+          totalCount={filteredInstallations.length}
+        />
 
         {/* Main Table */}
         <div className="bg-white rounded-lg border border-charcoal-200 shadow-sm overflow-hidden">

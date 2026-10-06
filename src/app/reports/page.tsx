@@ -133,7 +133,7 @@ export default function ReportingAndMonthlyTrackerPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, selectedReportType, selectedMonth, dateFrom, dateTo, customerTypeFilter, districtFilter, searchQuery, toast]);
+  }, [activeTab, selectedReportType, selectedMonth, dateFrom, dateTo, customerTypeFilter, districtFilter, searchQuery]);
 
   useEffect(() => {
     fetchReport();

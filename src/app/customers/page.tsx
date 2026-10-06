@@ -130,7 +130,7 @@ export default function CustomerManagementPage() {
 
   useEffect(() => {
     fetchCustomers();
-  }, [fetchCustomers, currentUser]);
+  }, [fetchCustomers, currentUser?.id]);
 
   // Handle B2C Submit
   const handleB2CSubmit = async (e: React.FormEvent) => {

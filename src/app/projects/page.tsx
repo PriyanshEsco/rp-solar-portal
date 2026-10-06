@@ -109,17 +109,14 @@ export default function ProjectManagementPage() {
       const json = await res.json();
       if (json.success) {
         setProjects(json.data);
-        if (selectedProject) {
-          const updatedSelected = json.data.find((p: any) => p.id === selectedProject.id);
-          if (updatedSelected) setSelectedProject(updatedSelected);
-        }
+        setSelectedProject((prev: any) => (prev ? (json.data.find((p: any) => p.id === prev.id) || prev) : null));
       }
     } catch (e) {
       console.error(e);
     } finally {
       setIsLoading(false);
     }
-  }, [typeFilter, statusFilter, searchQuery, selectedProject]);
+  }, [typeFilter, statusFilter, searchQuery]);
 
   // Fetch Customers for assignment
   const fetchCustomers = useCallback(async () => {
@@ -137,7 +134,7 @@ export default function ProjectManagementPage() {
   useEffect(() => {
     fetchProjects();
     fetchCustomers();
-  }, [fetchProjects, fetchCustomers, currentUser]);
+  }, [fetchProjects, fetchCustomers, currentUser?.id]);
 
   // Stage status styling helpers
   const getStageStatusBadge = (status: StageStatus) => {
